@@ -135,12 +135,25 @@ if st.session_state.quiz_submitted:
         user_answer = st.session_state.user_answers.get(i + 1)
         correct_answer = st.session_state.correct_answers[i]
 
-     
+      
         st.write(f"Q{i+1}: {st.session_state.questions[i]}")
+
+        
+        user_answer_display = user_answer if user_answer else "No answer selected"
+        
+    
+        if user_answer == correct_answer:
+            answer_status = "Correct"
+            answer_color = "green"
+        else:
+            answer_status = "Incorrect"
+            answer_color = "red"
+
         st.write(
-            f"Your Answer: {user_answer} ({answer_status})", unsafe_allow_html=True
+            f"Your Answer: {user_answer_display} ({answer_status})", unsafe_allow_html=True
         )
         st.write(
             f"Correct Answer: {correct_answer} (Correct)", unsafe_allow_html=True
         )
         st.write("---")
+
