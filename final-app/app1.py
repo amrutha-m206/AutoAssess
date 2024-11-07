@@ -1,5 +1,5 @@
 import streamlit as st
-import pymupdf as fitz
+import fitz
 from groq import Groq
 
 client = Groq(api_key="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")
@@ -21,7 +21,7 @@ def generate_questions(text, num_questions):
     truncated_text = text[:max_input_length]
 
     prompt = (
-        f"Generate {num_questions} quiz questions with 4 multiple choice options and explicitly mark the correct answer as follows:\n\n"
+        f"Generate {num_questions} quiz questions based on the following text. For each question, provide 4 distinct multiple choice options with one correct answer. Do not include 'None of the above' or similar options like 'All of the above'. Clearly mark the correct answer as follows:\n\n"
         f"For each question, provide 4 options, and make sure the correct answer is clearly labeled like this: 'Answer: <correct_answer>'\n\n"
         f"{truncated_text}"
     )
@@ -51,15 +51,15 @@ def generate_questions(text, num_questions):
                     correct_answers.append(current_answer)
                 question_text = line.split(":", 1)[-1].strip()
                 current_question, current_options, current_answer = (
-                    question_text,
+                    question_text.replace("**", ""),
                     [],
                     None,
                 )
             elif line.lower().startswith(("a)", "b)", "c)", "d)")):
-                current_options.append(line.strip())
+                current_options.append(line.strip().replace("**", ""))
             elif "answer:" in line.lower():  # Make sure we capture answers correctly
                 # Extract the correct answer and clean up any extraneous text
-                current_answer = line.split(":", 1)[-1].strip()
+                current_answer = line.split(":", 1)[-1].strip().replace("**", "")
 
         if current_question:
             questions.append(current_question)
@@ -105,20 +105,23 @@ if "questions" in st.session_state:
         ):
             st.write(f"Q{i}: {question}")
             selected_answer = st.radio(
-                f"Select your answer for Question {i}", opts, key=f"question_{i}"
+                f"Select your answer for Question {i}",
+                opts,
+                key=f"question_{i}",
+                index=None,
             )
             st.session_state.user_answers[i] = selected_answer
 
         submit_button = st.form_submit_button(label="Submit Quiz")
 
         if submit_button:
-            # Check answers and calculate score
-            score = sum(
-                1
-                for i in range(num_questions)
-                if st.session_state.user_answers.get(i + 1)
-                == st.session_state.correct_answers[i]
-            )
+           
+            score = 0
+            for i in range(num_questions):
+                user_answer = st.session_state.user_answers.get(i + 1)
+                if user_answer and user_answer == st.session_state.correct_answers[i]:
+                    score += 1
+
             st.session_state.score = score
             st.session_state.total_questions = num_questions
             st.session_state.quiz_submitted = True
@@ -128,10 +131,30 @@ if st.session_state.quiz_submitted:
         f"Your score: {st.session_state.score}/{st.session_state.total_questions}"
     )
 
-    # Display correct answers
+    
     st.subheader("Correct Answers")
     for i in range(num_questions):
-        st.write(f"Q{i+1}: {st.session_state.questions[i]}")
-        st.write(f"Your Answer: {st.session_state.user_answers.get(i+1)}")
-        st.write(f"Correct Answer: {st.session_state.correct_answers[i]}")
+        user_answer = st.session_state.user_answers.get(i + 1)
+        correct_answer = st.session_state.correct_answers[i]
+
+        
+        question_text = st.session_state.questions[i].replace("**", "")
+        user_answer_text = user_answer.replace("**", "") if user_answer else ""
+        correct_answer_text = correct_answer.replace("**", "")
+
+       
+        if user_answer == correct_answer:
+            answer_status = "Correct"
+            answer_color = "green"
+        else:
+            answer_status = "Incorrect"
+            answer_color = "red"
+
+        st.write(f"Q{i+1}: {question_text}")
+        st.write(
+            f"Your Answer: {user_answer_text} ({answer_status})", unsafe_allow_html=True
+        )
+        st.write(
+            f"Correct Answer: {correct_answer_text} (Correct)", unsafe_allow_html=True
+        )
         st.write("---")
