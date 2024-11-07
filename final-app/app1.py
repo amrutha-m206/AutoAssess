@@ -130,13 +130,12 @@ if st.session_state.quiz_submitted:
         f"Your score: {st.session_state.score}/{st.session_state.total_questions}"
     )
 
-    # Display correct answers
     st.subheader("Correct Answers")
     for i in range(num_questions):
         user_answer = st.session_state.user_answers.get(i + 1)
         correct_answer = st.session_state.correct_answers[i]
 
-        # No longer removing '**' from question/answer
+     
         st.write(f"Q{i+1}: {st.session_state.questions[i]}")
         st.write(
             f"Your Answer: {user_answer} ({answer_status})", unsafe_allow_html=True
