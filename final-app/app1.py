@@ -1,5 +1,5 @@
 import streamlit as st
-import fitz
+from PyMuPDF import fitz
 from groq import Groq
 
 client = Groq(api_key="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")
