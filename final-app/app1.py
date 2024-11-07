@@ -5,6 +5,8 @@ from groq import Groq
 client = Groq(api_key="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")
 
 
+
+
 # Function to extract text from a PDF
 def extract_text_from_pdf(uploaded_file):
     """Extract text from the uploaded PDF file."""
@@ -51,15 +53,15 @@ def generate_questions(text, num_questions):
                     correct_answers.append(current_answer)
                 question_text = line.split(":", 1)[-1].strip()
                 current_question, current_options, current_answer = (
-                    question_text.replace("**", ""),
+                    question_text,
                     [],
                     None,
                 )
             elif line.lower().startswith(("a)", "b)", "c)", "d)")):
-                current_options.append(line.strip().replace("**", ""))
+                current_options.append(line.strip())
             elif "answer:" in line.lower():  # Make sure we capture answers correctly
                 # Extract the correct answer and clean up any extraneous text
-                current_answer = line.split(":", 1)[-1].strip().replace("**", "")
+                current_answer = line.split(":", 1)[-1].strip()
 
         if current_question:
             questions.append(current_question)
@@ -105,17 +107,14 @@ if "questions" in st.session_state:
         ):
             st.write(f"Q{i}: {question}")
             selected_answer = st.radio(
-                f"Select your answer for Question {i}",
-                opts,
-                key=f"question_{i}",
-                index=None,
+                f"Select your answer for Question {i}", opts, key=f"question_{i}",index=None
             )
             st.session_state.user_answers[i] = selected_answer
 
         submit_button = st.form_submit_button(label="Submit Quiz")
 
         if submit_button:
-           
+            # Check answers and calculate score
             score = 0
             for i in range(num_questions):
                 user_answer = st.session_state.user_answers.get(i + 1)
@@ -137,21 +136,12 @@ if st.session_state.quiz_submitted:
         user_answer = st.session_state.user_answers.get(i + 1)
         correct_answer = st.session_state.correct_answers[i]
 
-        # Clean up the question and answers by removing '**'
-        question_text = st.session_state.questions[i].replace("**", "")
-        user_answer_text = user_answer.replace("**", "") if user_answer else ""
-        
-        
-        correct_answer_text = correct_answer.replace("**", "") if correct_answer else "No correct answer provided"
-
-       
-    
-        # Display question, user answer, and correct answer with status
-        st.write(f"Q{i+1}: {question_text}")
+        # No longer removing '**' from question/answer
+        st.write(f"Q{i+1}: {st.session_state.questions[i]}")
         st.write(
-            f"Your Answer: {user_answer_text} ({answer_status})", unsafe_allow_html=True
+            f"Your Answer: {user_answer} ({answer_status})", unsafe_allow_html=True
         )
         st.write(
-            f"Correct Answer: {correct_answer_text} (Correct)", unsafe_allow_html=True
+            f"Correct Answer: {correct_answer} (Correct)", unsafe_allow_html=True
         )
         st.write("---")
