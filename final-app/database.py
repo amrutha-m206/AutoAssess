@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, Text, String, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, Text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -8,16 +8,11 @@ engine = create_engine(DATABASE_URL)
 Base = declarative_base()
 
 
-# Quiz table to store generated questions and answers
-class Quiz(Base):
-    __tablename__ = "quizzes"
+# Table to store extracted PDF text
+class PDFText(Base):
+    __tablename__ = "pdf_texts"
     id = Column(Integer, primary_key=True)
-    question = Column(Text)
-    option_a = Column(String)
-    option_b = Column(String)
-    option_c = Column(String)
-    option_d = Column(String)
-    correct_answer = Column(String)
+    pdf_text = Column(Text)  # Store the entire extracted text from the PDF
 
 
 # Create the database
@@ -25,25 +20,18 @@ Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 
 
-# Function to store quiz questions in database
-def add_quiz(question, options, correct_answer):
+# Function to add extracted text to the database
+def add_pdf_text(text):
     session = Session()
-    quiz = Quiz(
-        question=question,
-        option_a=options[0],
-        option_b=options[1],
-        option_c=options[2],
-        option_d=options[3],
-        correct_answer=correct_answer,
-    )
-    session.add(quiz)
+    pdf_entry = PDFText(pdf_text=text)
+    session.add(pdf_entry)
     session.commit()
     session.close()
 
 
-# Function to get all quizzes
-def get_quizzes():
+# Function to get the latest extracted text
+def get_latest_pdf_text():
     session = Session()
-    quizzes = session.query(Quiz).all()
+    pdf_text = session.query(PDFText).order_by(PDFText.id.desc()).first()
     session.close()
-    return quizzes
+    return pdf_text.pdf_text if pdf_text else ""
